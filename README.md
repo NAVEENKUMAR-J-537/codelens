@@ -251,7 +251,7 @@ codelens/
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/NAVEENKUMAR-J-537/codelens.git
 cd codelens
 ```
 
