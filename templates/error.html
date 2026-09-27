@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>CodeLens | Upload Error</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+    <header class="navbar">
+
+        <div class="container nav-content">
+
+            <div class="logo">
+
+                <span class="logo-icon">
+                    &lt;/&gt;
+                </span>
+
+                CodeLens
+
+            </div>
+
+            <div class="nav-label">
+                Python Static Analysis
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main class="error-page">
+
+        <section class="error-card">
+
+            <div class="error-icon">
+                !
+            </div>
+
+            <h1>
+                Unable to analyze project
+            </h1>
+
+            <p>
+                {{ message }}
+            </p>
+
+            <a
+                href="/"
+                class="analyze-button error-back-button"
+            >
+                Try Another File
+            </a>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+        CodeLens · Python Static Analysis
+    </footer>
+
+</body>
+
+</html>

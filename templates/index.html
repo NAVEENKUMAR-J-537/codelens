@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>CodeLens | Python Codebase Analyzer</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+
+<body>
+
+    <header class="navbar">
+
+        <div class="container nav-content">
+
+            <div class="logo">
+                <span class="logo-icon">&lt;/&gt;</span>
+                CodeLens
+            </div>
+
+            <div class="nav-label">
+                Python Static Analysis
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main class="home-main">
+
+        <section class="hero">
+
+            <div class="hero-badge">
+                Python Codebase Analyzer
+            </div>
+
+            <h1>
+                Understand your Python
+                <span>codebase.</span>
+            </h1>
+
+            <p class="hero-description">
+                Analyze structure, code quality, complexity and
+                dependencies without executing your source code.
+            </p>
+
+
+            <form
+                action="/analyze"
+                method="POST"
+                enctype="multipart/form-data"
+                class="upload-form"
+                id="upload-form"
+            >
+
+                <label
+                    class="upload-box"
+                    id="drop-zone"
+                    for="project-file"
+                >
+
+                    <div class="upload-icon">
+                        ↑
+                    </div>
+
+                    <h3 id="upload-title">
+                        Upload your project
+                    </h3>
+
+                    <p id="upload-description">
+                        Drag & drop a Python file or ZIP project here
+                    </p>
+
+                    <span class="browse-button">
+                        Browse Files
+                    </span>
+
+                    <input
+                        id="project-file"
+                        type="file"
+                        name="project"
+                        accept=".py,.zip"
+                        required
+                    >
+
+                    <p
+                        class="upload-hint"
+                    >
+                        .py or .zip · Maximum 10 MB
+                    </p>
+
+                    <p
+                        class="selected-file"
+                        id="selected-file"
+                    >
+                        No file selected
+                    </p>
+
+                    <p
+                        class="upload-error"
+                        id="upload-error"
+                    ></p>
+
+                </label>
+
+
+                <button
+                    class="analyze-button"
+                    id="analyze-button"
+                    type="submit"
+                >
+                    Analyze Code
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <section class="features container">
+
+            <div class="feature">
+
+                <h3>Code Structure</h3>
+
+                <p>
+                    Functions, methods, classes,
+                    imports and decorators.
+                </p>
+
+            </div>
+
+
+            <div class="feature">
+
+                <h3>Quality Detection</h3>
+
+                <p>
+                    Detect common Python code-quality
+                    problems automatically.
+                </p>
+
+            </div>
+
+
+            <div class="feature">
+
+                <h3>Complexity</h3>
+
+                <p>
+                    Measure function and method
+                    cyclomatic complexity.
+                </p>
+
+            </div>
+
+
+            <div class="feature">
+
+                <h3>Dependencies</h3>
+
+                <p>
+                    Understand external, standard and
+                    internal dependencies.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+        CodeLens · Python Static Analysis
+    </footer>
+
+
+    <script>
+
+        // =========================================
+        // ELEMENTS
+        // =========================================
+
+        const fileInput =
+            document.getElementById("project-file");
+
+        const selectedFile =
+            document.getElementById("selected-file");
+
+        const dropZone =
+            document.getElementById("drop-zone");
+
+        const uploadError =
+            document.getElementById("upload-error");
+
+        const uploadTitle =
+            document.getElementById("upload-title");
+
+        const uploadDescription =
+            document.getElementById(
+                "upload-description"
+            );
+
+        const uploadForm =
+            document.getElementById("upload-form");
+
+
+        const MAX_FILE_SIZE =
+            10 * 1024 * 1024;
+
+
+        // =========================================
+        // NORMAL FILE SELECTION
+        // =========================================
+
+        fileInput.addEventListener(
+            "change",
+            function () {
+
+                if (fileInput.files.length > 0) {
+
+                    handleFile(
+                        fileInput.files[0]
+                    );
+
+                } else {
+
+                    resetUploadDisplay();
+
+                }
+
+            }
+        );
+
+
+        // =========================================
+        // DRAG ENTER
+        // =========================================
+
+        dropZone.addEventListener(
+            "dragenter",
+            function (event) {
+
+                event.preventDefault();
+
+                dropZone.classList.add(
+                    "drag-active"
+                );
+
+            }
+        );
+
+
+        // =========================================
+        // DRAG OVER
+        // =========================================
+
+        dropZone.addEventListener(
+            "dragover",
+            function (event) {
+
+                event.preventDefault();
+
+                dropZone.classList.add(
+                    "drag-active"
+                );
+
+            }
+        );
+
+
+        // =========================================
+        // DRAG LEAVE
+        // =========================================
+
+        dropZone.addEventListener(
+            "dragleave",
+            function (event) {
+
+                event.preventDefault();
+
+                dropZone.classList.remove(
+                    "drag-active"
+                );
+
+            }
+        );
+
+
+        // =========================================
+        // DROP
+        // =========================================
+
+        dropZone.addEventListener(
+            "drop",
+            function (event) {
+
+                event.preventDefault();
+
+                dropZone.classList.remove(
+                    "drag-active"
+                );
+
+
+                const files =
+                    event.dataTransfer.files;
+
+
+                if (files.length === 0) {
+                    return;
+                }
+
+
+                if (files.length > 1) {
+
+                    showError(
+                        "Please upload only one file at a time."
+                    );
+
+                    return;
+                }
+
+
+                const file = files[0];
+
+
+                // Put dropped file into the
+                // real file input so the existing
+                // Flask form receives it normally.
+
+                const dataTransfer =
+                    new DataTransfer();
+
+
+                dataTransfer.items.add(
+                    file
+                );
+
+
+                fileInput.files =
+                    dataTransfer.files;
+
+
+                handleFile(file);
+
+            }
+        );
+
+
+        // =========================================
+        // VALIDATE BEFORE FORM SUBMISSION
+        // =========================================
+
+        uploadForm.addEventListener(
+            "submit",
+            function (event) {
+
+                if (fileInput.files.length === 0) {
+
+                    event.preventDefault();
+
+                    showError(
+                        "Please select a Python or ZIP file."
+                    );
+
+                    return;
+                }
+
+
+                const file =
+                    fileInput.files[0];
+
+
+                if (!validateFile(file)) {
+
+                    event.preventDefault();
+
+                }
+
+            }
+        );
+
+
+        // =========================================
+        // HANDLE SELECTED FILE
+        // =========================================
+
+        function handleFile(file) {
+
+            clearError();
+
+
+            if (!validateFile(file)) {
+
+                selectedFile.textContent =
+                    "No valid file selected";
+
+                uploadTitle.textContent =
+                    "Upload your project";
+
+                uploadDescription.textContent =
+                    "Drag & drop a Python file or ZIP project here";
+
+                return;
+            }
+
+
+            selectedFile.textContent =
+                "✓ " + file.name;
+
+
+            uploadTitle.textContent =
+                "Project ready";
+
+
+            uploadDescription.textContent =
+                formatFileSize(file.size)
+                + " · Ready to analyze";
+
+        }
+
+
+        // =========================================
+        // VALIDATION
+        // =========================================
+
+        function validateFile(file) {
+
+            const fileName =
+                file.name.toLowerCase();
+
+
+            const validExtension =
+                fileName.endsWith(".py")
+                || fileName.endsWith(".zip");
+
+
+            if (!validExtension) {
+
+                showError(
+                    "Only .py and .zip files are supported."
+                );
+
+                return false;
+            }
+
+
+            if (file.size > MAX_FILE_SIZE) {
+
+                showError(
+                    "File is too large. Maximum upload size is 10 MB."
+                );
+
+                return false;
+            }
+
+
+            return true;
+
+        }
+
+
+        // =========================================
+        // FILE SIZE DISPLAY
+        // =========================================
+
+        function formatFileSize(bytes) {
+
+            if (bytes < 1024) {
+
+                return bytes + " B";
+
+            }
+
+
+            if (bytes < 1024 * 1024) {
+
+                return (
+                    bytes / 1024
+                ).toFixed(1) + " KB";
+
+            }
+
+
+            return (
+                bytes
+                / (1024 * 1024)
+            ).toFixed(2) + " MB";
+
+        }
+
+
+        // =========================================
+        // ERROR DISPLAY
+        // =========================================
+
+        function showError(message) {
+
+            uploadError.textContent =
+                message;
+
+
+            dropZone.classList.add(
+                "upload-invalid"
+            );
+
+        }
+
+
+        function clearError() {
+
+            uploadError.textContent = "";
+
+
+            dropZone.classList.remove(
+                "upload-invalid"
+            );
+
+        }
+
+
+        // =========================================
+        // RESET DISPLAY
+        // =========================================
+
+        function resetUploadDisplay() {
+
+            clearError();
+
+
+            selectedFile.textContent =
+                "No file selected";
+
+
+            uploadTitle.textContent =
+                "Upload your project";
+
+
+            uploadDescription.textContent =
+                "Drag & drop a Python file or ZIP project here";
+
+        }
+
+    </script>
+
+</body>
+
+</html>

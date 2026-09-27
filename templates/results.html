@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>CodeLens | Analysis Results</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<header class="navbar">
+
+    <div class="container nav-content">
+
+        <div class="logo">
+            <span class="logo-icon">&lt;/&gt;</span>
+            CodeLens
+        </div>
+
+        <div class="report-actions">
+
+    <a
+        class="report-button"
+        href="/report/{{ report_id }}/pdf"
+    >
+        Download PDF
+    </a>
+
+    <a
+        class="report-button"
+        href="/report/{{ report_id }}/json"
+    >
+        Download JSON
+    </a>
+
+    <a
+        class="new-analysis"
+        href="/"
+    >
+        + New Analysis
+    </a>
+
+</div>
+
+    </div>
+
+</header>
+
+
+<main class="container dashboard">
+
+
+    <!-- ================================= -->
+    <!-- PAGE TITLE -->
+    <!-- ================================= -->
+
+    <section class="dashboard-heading">
+
+        <div>
+
+            <p class="section-label">
+                ANALYSIS REPORT
+            </p>
+
+            <h1>Project Overview</h1>
+
+            <p>
+                Static analysis results for your Python codebase.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================= -->
+    <!-- OVERVIEW CARDS -->
+    <!-- ================================= -->
+
+    <section class="stats-grid">
+
+        <div class="stat-card">
+            <span>Python Files</span>
+            <strong>{{ results.python_files }}</strong>
+        </div>
+
+        <div class="stat-card">
+            <span>Total Lines</span>
+            <strong>{{ results.total_lines }}</strong>
+        </div>
+
+        <div class="stat-card">
+            <span>Functions</span>
+            <strong>{{ results.functions }}</strong>
+        </div>
+
+        <div class="stat-card">
+            <span>Methods</span>
+            <strong>{{ results.methods }}</strong>
+        </div>
+
+        <div class="stat-card">
+            <span>Classes</span>
+            <strong>{{ results.classes }}</strong>
+        </div>
+
+        <div class="stat-card">
+            <span>Imports</span>
+            <strong>{{ results.imports }}</strong>
+        </div>
+
+        <div class="stat-card">
+            <span>Decorators</span>
+            <strong>{{ results.decorators }}</strong>
+        </div>
+
+        <div class="stat-card">
+            <span>Issues</span>
+            <strong>{{ results.issues | length }}</strong>
+        </div>
+
+    </section>
+
+
+    <!-- ================================= -->
+    <!-- CODE STRUCTURE -->
+    <!-- ================================= -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+            <h2>Code Structure</h2>
+        </div>
+
+        <div class="structure-grid">
+
+            <div>
+                <span>Functions</span>
+                <strong>{{ results.functions }}</strong>
+            </div>
+
+            <div>
+                <span>Methods</span>
+                <strong>{{ results.methods }}</strong>
+            </div>
+
+            <div>
+                <span>Async Functions</span>
+                <strong>{{ results.async_functions }}</strong>
+            </div>
+
+            <div>
+                <span>Async Methods</span>
+                <strong>{{ results.async_methods }}</strong>
+            </div>
+
+            <div>
+                <span>Classes</span>
+                <strong>{{ results.classes }}</strong>
+            </div>
+
+            <div>
+                <span>Decorators</span>
+                <strong>{{ results.decorators }}</strong>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================= -->
+    <!-- QUALITY ISSUES -->
+    <!-- ================================= -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+
+            <h2>Code Quality</h2>
+
+            <span class="count-badge">
+                {{ results.issues | length }} issues
+            </span>
+
+        </div>
+
+
+        {% if results.issues %}
+
+            <div class="issue-list">
+
+                {% for issue in results.issues %}
+
+                    <div class="issue-card">
+
+                        <div class="issue-title">
+
+                            <span class="warning-icon">!</span>
+
+                            {{ issue.type }}
+
+                        </div>
+
+                        <div class="issue-location">
+
+                            {{ issue.file }}
+                            · Line {{ issue.line }}
+
+                            {% if issue.function %}
+                                · {{ issue.function }}()
+                            {% endif %}
+
+                        </div>
+
+                        <p>
+                            {{ issue.message }}
+                        </p>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+
+        {% else %}
+
+            <div class="success-box">
+
+                <span>✓</span>
+
+                <div>
+
+                    <strong>
+                        No issues detected
+                    </strong>
+
+                    <p>
+                        No currently supported code-quality
+                        problems were found.
+                    </p>
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- ================================= -->
+    <!-- COMPLEXITY -->
+    <!-- ================================= -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+            <h2>Function & Method Complexity</h2>
+        </div>
+
+
+        {% if results.complexity %}
+
+
+            <!-- Calculate percentages once -->
+
+            {% set total_complexity_items =
+                results.complexity | length
+            %}
+
+            {% set low_percent =
+                results.complexity_summary.low
+                / total_complexity_items
+                * 100
+            %}
+
+            {% set medium_percent =
+                results.complexity_summary.medium
+                / total_complexity_items
+                * 100
+            %}
+
+            {% set high_percent =
+                results.complexity_summary.high
+                / total_complexity_items
+                * 100
+            %}
+
+
+            <!-- ================================= -->
+            <!-- COMPLEXITY SUMMARY -->
+            <!-- ================================= -->
+
+            <div class="complexity-summary">
+
+
+                <div class="complexity-summary-card">
+
+                    <span>
+                        Average Complexity
+                    </span>
+
+                    <strong>
+                        {{ results.complexity_summary.average }}
+                    </strong>
+
+                </div>
+
+
+                <div class="complexity-summary-card">
+
+                    <span>
+                        Highest Complexity
+                    </span>
+
+                    <strong>
+                        {{ results.complexity_summary.highest }}
+                    </strong>
+
+                </div>
+
+
+                <div class="complexity-summary-card">
+
+                    <span>
+                        Most Complex
+                    </span>
+
+                    <strong class="complex-function-name">
+                        {{ results.complexity_summary.most_complex }}
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ================================= -->
+            <!-- COMPLEXITY DISTRIBUTION -->
+            <!-- ================================= -->
+
+            <div class="complexity-distribution">
+
+                <h3>
+                    Complexity Distribution
+                </h3>
+
+
+                <!-- LOW -->
+
+                <div class="distribution-row">
+
+                    <div class="distribution-label">
+
+                        <span>Low</span>
+
+                        <strong>
+                            {{ results.complexity_summary.low }}
+                        </strong>
+
+                    </div>
+
+                    <div class="distribution-track">
+
+                        <div
+                            class="distribution-bar low-bar"
+                            data-width="{{ low_percent }}"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- MEDIUM -->
+
+                <div class="distribution-row">
+
+                    <div class="distribution-label">
+
+                        <span>Medium</span>
+
+                        <strong>
+                            {{ results.complexity_summary.medium }}
+                        </strong>
+
+                    </div>
+
+                    <div class="distribution-track">
+
+                        <div
+                            class="distribution-bar medium-bar"
+                            data-width="{{ medium_percent }}"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- HIGH -->
+
+                <div class="distribution-row">
+
+                    <div class="distribution-label">
+
+                        <span>High</span>
+
+                        <strong>
+                            {{ results.complexity_summary.high }}
+                        </strong>
+
+                    </div>
+
+                    <div class="distribution-track">
+
+                        <div
+                            class="distribution-bar high-bar"
+                            data-width="{{ high_percent }}"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================= -->
+            <!-- COMPLEXITY TABLE -->
+            <!-- ================================= -->
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Name</th>
+                            <th>File</th>
+                            <th>Line</th>
+                            <th>Complexity</th>
+                            <th>Level</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for item in results.complexity %}
+
+                            <tr>
+
+                                <td>
+                                    <strong>
+                                        {{ item.name }}
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    {{ item.file }}
+                                </td>
+
+                                <td>
+                                    {{ item.line }}
+                                </td>
+
+                                <td>
+                                    {{ item.complexity }}
+                                </td>
+
+                                <td>
+
+                                    <span
+                                        class="complexity-badge {{ item.level | lower }}"
+                                    >
+                                        {{ item.level }}
+                                    </span>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+        {% else %}
+
+            <p class="empty-message">
+                No functions or methods available
+                for complexity analysis.
+            </p>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- ================================= -->
+    <!-- DEPENDENCIES -->
+    <!-- ================================= -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+            <h2>Dependencies</h2>
+        </div>
+
+
+        <div class="dependency-grid">
+
+
+            <!-- EXTERNAL -->
+
+            <div class="dependency-column">
+
+                <h3>External Packages</h3>
+
+                {% if results.dependencies.external %}
+
+                    {% for dependency in results.dependencies.external %}
+
+                        <span class="dependency-tag">
+                            {{ dependency }}
+                        </span>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <p>None detected</p>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- STANDARD -->
+
+            <div class="dependency-column">
+
+                <h3>Standard Library</h3>
+
+                {% if results.dependencies.standard %}
+
+                    {% for dependency in results.dependencies.standard %}
+
+                        <span class="dependency-tag">
+                            {{ dependency }}
+                        </span>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <p>None detected</p>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- INTERNAL -->
+
+            <div class="dependency-column">
+
+                <h3>Internal Modules</h3>
+
+                {% if results.dependencies.internal %}
+
+                    {% for dependency in results.dependencies.internal %}
+
+                        <span class="dependency-tag">
+                            {{ dependency }}
+                        </span>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <p>None detected</p>
+
+                {% endif %}
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================= -->
+    <!-- DEPENDENCY GRAPH -->
+    <!-- ================================= -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h2>
+                    Internal Dependency Graph
+                </h2>
+
+                <p class="panel-description">
+                    Relationships between Python files
+                    in the project.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% if results.dependency_graph %}
+
+            <div class="visual-graph-container">
+
+                <svg
+                    id="dependency-graph"
+                    class="dependency-graph-svg"
+                ></svg>
+
+            </div>
+
+
+            <!--
+                Safely pass graph information
+                from Jinja to JavaScript.
+            -->
+
+            <script
+                id="graph-data"
+                type="application/json"
+            >
+                {{ results.dependency_graph | tojson }}
+            </script>
+
+
+        {% else %}
+
+            <div class="empty-graph">
+
+                <div class="empty-graph-icon">
+                    &lt;/&gt;
+                </div>
+
+                <strong>
+                    No internal dependencies
+                </strong>
+
+                <p>
+                    No relationships between project
+                    files were detected.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- ================================= -->
+    <!-- FILE ANALYSIS -->
+    <!-- ================================= -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+            <h2>File Analysis</h2>
+        </div>
+
+
+        <div class="file-grid">
+
+            {% for file in results.files %}
+
+                <div class="file-card">
+
+                    <h3>
+                        {{ file.name }}
+                    </h3>
+
+
+                    <div class="file-stats">
+
+
+                        <div>
+                            <span>Lines</span>
+                            <strong>
+                                {{ file.lines }}
+                            </strong>
+                        </div>
+
+
+                        <div>
+                            <span>Functions</span>
+                            <strong>
+                                {{ file.functions }}
+                            </strong>
+                        </div>
+
+
+                        <div>
+                            <span>Methods</span>
+                            <strong>
+                                {{ file.methods }}
+                            </strong>
+                        </div>
+
+
+                        <div>
+                            <span>Classes</span>
+                            <strong>
+                                {{ file.classes }}
+                            </strong>
+                        </div>
+
+
+                        <div>
+                            <span>Imports</span>
+                            <strong>
+                                {{ file.imports }}
+                            </strong>
+                        </div>
+
+
+                        <div>
+                            <span>Decorators</span>
+                            <strong>
+                                {{ file.decorators }}
+                            </strong>
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+<footer>
+    CodeLens · Python Static Analysis
+</footer>
+
+
+<!-- ================================= -->
+<!-- JAVASCRIPT -->
+<!-- ================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+        // =========================================
+        // COMPLEXITY DISTRIBUTION BARS
+        // =========================================
+
+        const distributionBars =
+            document.querySelectorAll(
+                ".distribution-bar"
+            );
+
+
+        distributionBars.forEach(bar => {
+
+            const width =
+                parseFloat(
+                    bar.dataset.width
+                ) || 0;
+
+            const safeWidth =
+                Math.max(
+                    0,
+                    Math.min(100, width)
+                );
+
+            bar.style.width =
+                safeWidth + "%";
+
+        });
+
+
+        // =========================================
+        // DEPENDENCY GRAPH
+        // =========================================
+
+        const graphDataElement =
+            document.getElementById(
+                "graph-data"
+            );
+
+        const svg =
+            document.getElementById(
+                "dependency-graph"
+            );
+
+
+        if (!graphDataElement || !svg) {
+            return;
+        }
+
+
+        const connections =
+            JSON.parse(
+                graphDataElement.textContent
+            );
+
+
+        if (connections.length === 0) {
+            return;
+        }
+
+
+        // -----------------------------------------
+        // 1. Collect unique file names
+        // -----------------------------------------
+
+        const nodeNames = new Set();
+
+
+        connections.forEach(connection => {
+
+            nodeNames.add(
+                connection.source
+            );
+
+            nodeNames.add(
+                connection.target
+            );
+
+        });
+
+
+        const nodes =
+            Array.from(nodeNames);
+
+
+        // -----------------------------------------
+        // 2. Count incoming connections
+        // -----------------------------------------
+
+        const incomingCount = {};
+
+
+        nodes.forEach(node => {
+
+            incomingCount[node] = 0;
+
+        });
+
+
+        connections.forEach(connection => {
+
+            if (
+                incomingCount[
+                    connection.target
+                ] !== undefined
+            ) {
+
+                incomingCount[
+                    connection.target
+                ]++;
+
+            }
+
+        });
+
+
+        // -----------------------------------------
+        // 3. Find root nodes
+        // -----------------------------------------
+
+        let roots =
+            nodes.filter(
+                node =>
+                    incomingCount[node] === 0
+            );
+
+
+        // Circular projects may have no root.
+
+        if (roots.length === 0) {
+
+            roots = [
+                nodes[0]
+            ];
+
+        }
+
+
+        // -----------------------------------------
+        // 4. Assign graph levels
+        // -----------------------------------------
+
+        const levels = {};
+
+        const queue = [];
+
+
+        roots.forEach(root => {
+
+            levels[root] = 0;
+
+            queue.push(root);
+
+        });
+
+
+        while (queue.length > 0) {
+
+            const current =
+                queue.shift();
+
+            const currentLevel =
+                levels[current];
+
+
+            connections.forEach(
+                connection => {
+
+                    if (
+                        connection.source
+                        === current
+                    ) {
+
+                        const target =
+                            connection.target;
+
+
+                        if (
+                            levels[target]
+                            === undefined
+                        ) {
+
+                            levels[target] =
+                                currentLevel + 1;
+
+                            queue.push(target);
+
+                        }
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        // Circular or disconnected nodes.
+
+        nodes.forEach(node => {
+
+            if (
+                levels[node]
+                === undefined
+            ) {
+
+                levels[node] = 0;
+
+            }
+
+        });
+
+
+        // -----------------------------------------
+        // 5. Group nodes by level
+        // -----------------------------------------
+
+        const groupedLevels = {};
+
+
+        nodes.forEach(node => {
+
+            const level =
+                levels[node];
+
+
+            if (
+                !groupedLevels[level]
+            ) {
+
+                groupedLevels[level] = [];
+
+            }
+
+
+            groupedLevels[level].push(
+                node
+            );
+
+        });
+
+
+        // -----------------------------------------
+        // 6. Layout configuration
+        // -----------------------------------------
+
+        const nodeWidth = 180;
+
+        const nodeHeight = 48;
+
+        const horizontalGap = 70;
+
+        const verticalGap = 95;
+
+        const padding = 40;
+
+
+        const levelNumbers =
+            Object
+                .keys(groupedLevels)
+                .map(Number)
+                .sort(
+                    (a, b) => a - b
+                );
+
+
+        let maxNodesInLevel = 1;
+
+
+        levelNumbers.forEach(level => {
+
+            maxNodesInLevel =
+                Math.max(
+                    maxNodesInLevel,
+                    groupedLevels[level]
+                        .length
+                );
+
+        });
+
+
+        const graphWidth =
+            Math.max(
+
+                700,
+
+                padding * 2
+                + maxNodesInLevel
+                    * nodeWidth
+                + (maxNodesInLevel - 1)
+                    * horizontalGap
+
+            );
+
+
+        const graphHeight =
+
+            padding * 2
+
+            + levelNumbers.length
+                * nodeHeight
+
+            + (levelNumbers.length - 1)
+                * verticalGap;
+
+
+        svg.setAttribute(
+            "viewBox",
+            `0 0 ${graphWidth} ${graphHeight}`
+        );
+
+
+        svg.setAttribute(
+            "height",
+            graphHeight
+        );
+
+
+        // -----------------------------------------
+        // 7. Create arrow marker
+        // -----------------------------------------
+
+        const svgNamespace =
+            "http://www.w3.org/2000/svg";
+
+
+        const defs =
+            document.createElementNS(
+                svgNamespace,
+                "defs"
+            );
+
+
+        const marker =
+            document.createElementNS(
+                svgNamespace,
+                "marker"
+            );
+
+
+        marker.setAttribute(
+            "id",
+            "arrowhead"
+        );
+
+        marker.setAttribute(
+            "markerWidth",
+            "10"
+        );
+
+        marker.setAttribute(
+            "markerHeight",
+            "10"
+        );
+
+        marker.setAttribute(
+            "refX",
+            "9"
+        );
+
+        marker.setAttribute(
+            "refY",
+            "3"
+        );
+
+        marker.setAttribute(
+            "orient",
+            "auto"
+        );
+
+        marker.setAttribute(
+            "markerUnits",
+            "strokeWidth"
+        );
+
+
+        const arrowPath =
+            document.createElementNS(
+                svgNamespace,
+                "path"
+            );
+
+
+        arrowPath.setAttribute(
+            "d",
+            "M0,0 L0,6 L9,3 z"
+        );
+
+
+        arrowPath.setAttribute(
+            "class",
+            "graph-arrow-head"
+        );
+
+
+        marker.appendChild(
+            arrowPath
+        );
+
+
+        defs.appendChild(
+            marker
+        );
+
+
+        svg.appendChild(
+            defs
+        );
+
+
+        // -----------------------------------------
+        // 8. Calculate node positions
+        // -----------------------------------------
+
+        const positions = {};
+
+
+        levelNumbers.forEach(level => {
+
+            const levelNodes =
+                groupedLevels[level];
+
+
+            const totalLevelWidth =
+
+                levelNodes.length
+                    * nodeWidth
+
+                + (levelNodes.length - 1)
+                    * horizontalGap;
+
+
+            const startX =
+
+                (
+                    graphWidth
+                    - totalLevelWidth
+                ) / 2;
+
+
+            levelNodes.forEach(
+                (node, index) => {
+
+
+                    const x =
+
+                        startX
+
+                        + index
+                        * (
+                            nodeWidth
+                            + horizontalGap
+                        );
+
+
+                    const y =
+
+                        padding
+
+                        + level
+                        * (
+                            nodeHeight
+                            + verticalGap
+                        );
+
+
+                    positions[node] = {
+                        x: x,
+                        y: y
+                    };
+
+                }
+            );
+
+        });
+
+
+        // -----------------------------------------
+        // 9. Draw connection lines
+        // -----------------------------------------
+
+        connections.forEach(
+            connection => {
+
+
+                const source =
+                    positions[
+                        connection.source
+                    ];
+
+
+                const target =
+                    positions[
+                        connection.target
+                    ];
+
+
+                if (
+                    !source
+                    || !target
+                ) {
+
+                    return;
+
+                }
+
+
+                const startX =
+
+                    source.x
+                    + nodeWidth / 2;
+
+
+                const startY =
+
+                    source.y
+                    + nodeHeight;
+
+
+                const endX =
+
+                    target.x
+                    + nodeWidth / 2;
+
+
+                const endY =
+                    target.y;
+
+
+                const middleY =
+
+                    (
+                        startY
+                        + endY
+                    ) / 2;
+
+
+                const path =
+                    document.createElementNS(
+                        svgNamespace,
+                        "path"
+                    );
+
+
+                path.setAttribute(
+
+                    "d",
+
+                    `
+                    M ${startX} ${startY}
+                    C ${startX} ${middleY},
+                      ${endX} ${middleY},
+                      ${endX} ${endY}
+                    `
+
+                );
+
+
+                path.setAttribute(
+                    "class",
+                    "dependency-edge"
+                );
+
+
+                path.setAttribute(
+                    "marker-end",
+                    "url(#arrowhead)"
+                );
+
+
+                svg.appendChild(
+                    path
+                );
+
+            }
+        );
+
+
+        // -----------------------------------------
+        // 10. Draw nodes
+        // -----------------------------------------
+
+        nodes.forEach(node => {
+
+
+            const position =
+                positions[node];
+
+
+            const group =
+                document.createElementNS(
+                    svgNamespace,
+                    "g"
+                );
+
+
+            group.setAttribute(
+                "class",
+                "dependency-node"
+            );
+
+
+            const rectangle =
+                document.createElementNS(
+                    svgNamespace,
+                    "rect"
+                );
+
+
+            rectangle.setAttribute(
+                "x",
+                position.x
+            );
+
+            rectangle.setAttribute(
+                "y",
+                position.y
+            );
+
+            rectangle.setAttribute(
+                "width",
+                nodeWidth
+            );
+
+            rectangle.setAttribute(
+                "height",
+                nodeHeight
+            );
+
+            rectangle.setAttribute(
+                "rx",
+                "8"
+            );
+
+
+            const text =
+                document.createElementNS(
+                    svgNamespace,
+                    "text"
+                );
+
+
+            text.setAttribute(
+                "x",
+                position.x
+                    + nodeWidth / 2
+            );
+
+
+            text.setAttribute(
+                "y",
+                position.y
+                    + nodeHeight / 2
+            );
+
+
+            text.setAttribute(
+                "text-anchor",
+                "middle"
+            );
+
+
+            text.setAttribute(
+                "dominant-baseline",
+                "middle"
+            );
+
+
+            text.textContent =
+                node;
+
+
+            group.appendChild(
+                rectangle
+            );
+
+
+            group.appendChild(
+                text
+            );
+
+
+            svg.appendChild(
+                group
+            );
+
+        });
+
+    }
+);
+
+</script>
+
+
+</body>
+
+</html>
