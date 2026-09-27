@@ -6,6 +6,16 @@ Users can analyze either a single `.py` file or an entire Python project package
 
 ---
 
+## Live Demo
+
+CodeLens is deployed and available online:
+
+**[Try CodeLens Live](https://codelens-inhe.onrender.com/)**
+
+> The application is hosted on Render's free tier, so the first request after a period of inactivity may take some time to start.
+
+---
+
 ## Screenshots
 
 ### Homepage
